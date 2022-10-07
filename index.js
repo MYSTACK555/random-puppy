@@ -1,8 +1,6 @@
-'use strict';
-
-const got = require('got');
-const uniqueRandomArray = require('unique-random-array');
-const EventEmitter = require('eventemitter3');
+import got from 'got';
+import uniqueRandomArray from 'unique-random-array';
+import EventEmitter from 'eventemitter3';
 
 const randomCache = {};
 
@@ -11,6 +9,7 @@ function formatResult(getRandomImage) {
     if (!imageData) {
         return;
     }
+
     return `http://imgur.com/${imageData.hash}${imageData.ext.replace(/\?.*/, '')}`;
 }
 
@@ -21,51 +20,37 @@ function storeResults(images, subreddit) {
     return getRandomImage;
 }
 
-function randomPuppy(subreddit) {
-    subreddit = (typeof subreddit === 'string' && subreddit.length !== 0) ? subreddit : 'puppies';
+async function randomPuppy(subreddit) {
+    subreddit = (typeof subreddit === 'string' && subreddit.length > 0) ? subreddit : 'puppies';
 
     if (randomCache[subreddit]) {
-        return Promise.resolve(formatResult(randomCache[subreddit]));
+        return formatResult(randomCache[subreddit]);
     }
 
-    return got(`https://imgur.com/r/${subreddit}/hot.json`, {json: true})
-        .then(response => storeResults(response.body.data, subreddit))
-        .then(getRandomImage => formatResult(getRandomImage));
+    const response = await got(`https://imgur.com/r/${subreddit}/hot.json`, {responseType: 'json'});
+    const getRandomImage1 = storeResults(response.body.data, subreddit);
+    return formatResult(getRandomImage1);
 }
 
-// silly feature to play with observables
-function all(subreddit) {
+export default function f(subreddit) {
+    return randomPuppy(subreddit);
+}
+
+// Silly feature to play with observables
+export function all(subreddit) {
     const eventEmitter = new EventEmitter();
 
     function emitRandomImage(subreddit) {
-        randomPuppy(subreddit).then(imageUrl => {
-            eventEmitter.emit('data', imageUrl + '#' + subreddit);
-            if (eventEmitter.listeners('data').length) {
-                setTimeout(() => emitRandomImage(subreddit), 200);
-            }
-        });
+        randomPuppy(subreddit)
+            .then(imageUrl => {
+                eventEmitter.emit('data', imageUrl + '#' + subreddit);
+                if (eventEmitter.listeners('data').length > 0) {
+                    setTimeout(() => emitRandomImage(subreddit), 200);
+                }
+            })
+            .catch();
     }
 
     emitRandomImage(subreddit);
     return eventEmitter;
 }
-
-function callback(subreddit, cb) {
-    randomPuppy(subreddit)
-        .then(url => cb(null, url))
-        .catch(err => cb(err));
-}
-
-// subreddit is optional
-// callback support is provided for a training exercise
-module.exports = (subreddit, cb) => {
-    if (typeof cb === 'function') {
-        callback(subreddit, cb);
-    } else if (typeof subreddit === 'function') {
-        callback(null, subreddit);
-    } else {
-        return randomPuppy(subreddit);
-    }
-};
-
-module.exports.all = all;

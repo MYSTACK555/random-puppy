@@ -1,30 +1,11 @@
 import test from 'ava';
-import {Observable} from 'rx-lite';
-import randomPuppy from './';
+import RX from 'rx-lite';
+import randomPuppy, {all} from './index.js';
 
-const imgurRegEx = /^https?:\/\/(\w+\.)?imgur.com\/[a-zA-Z0-9]+(\.[a-zA-Z]{3})?(#[a-zA-Z]*)?$/;
-
+const imgurRegEx = /^https?:\/\/(\w+\.)?imgur.com\/[a-zA-Z\d]+(\.[a-zA-Z\d]{3})?(#[a-zA-Z\d]*)?$/;
 test('get random', async t => {
     const result = await randomPuppy();
     t.regex(result, imgurRegEx);
-});
-
-test.cb('use callback', t => {
-    t.plan(2);
-    randomPuppy((err, result) => {
-        t.falsy(err);
-        t.regex(result, imgurRegEx);
-        t.end();
-    });
-});
-
-test.cb('use callback and different subreddit', t => {
-    t.plan(2);
-    randomPuppy('aww', (err, result) => {
-        t.falsy(err);
-        t.regex(result, imgurRegEx);
-        t.end();
-    });
 });
 
 test('get more random', async t => {
@@ -62,19 +43,18 @@ test('invalid subreddit', async t => {
 
 test('all', t => {
     t.plan(10);
-    const puppyEmitter = randomPuppy.all('puppies');
-    const robotEmitter = randomPuppy.all('robots');
+    const puppyEmitter = all('puppies');
+    const robotEmitter = all('robots');
 
-    const puppySource = Observable.fromEvent(puppyEmitter, 'data');
-    const robotSource = Observable.fromEvent(robotEmitter, 'data');
+    const puppySource = RX.Observable.fromEvent(puppyEmitter, 'data');
+    const robotSource = RX.Observable.fromEvent(robotEmitter, 'data');
 
-    const sharedSource = Observable
+    const sharedSource = RX.Observable
         .merge(puppySource, robotSource)
         .take(10);
 
     sharedSource.subscribe(data => {
         t.regex(data, imgurRegEx);
-        // console.log(data);
     });
     return sharedSource.toPromise();
 });

@@ -10,7 +10,7 @@
     "url": "github.com/dylang"
   },
   "engines": {
-    "node": ">=4.0.0"
+    "node": ">=7.6.0"
   },
   "scripts": {
     "test": "xo && ava",
@@ -28,16 +28,17 @@
     "placeholder"
   ],
   "dependencies": {
-    "eventemitter3": "^1.2.0",
+    "eventemitter3": "^4.0.7",
     "got": "^12.5.1",
-    "unique-random-array": "^1.0.0"
+    "unique-random-array": "^3.0.0"
   },
   "devDependencies": {
-    "ava": "^0.14.0",
+    "ava": "^4.3.3",
     "rx-lite": "^4.0.8",
-    "xo": "^0.14.0"
+    "xo": "^0.52.4"
   },
   "xo": {
     "space": 4
-  }
+  },
+  "type":"module"
 }
